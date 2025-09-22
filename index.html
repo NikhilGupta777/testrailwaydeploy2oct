@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outreach Automator - Frontend</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .step-card {
+            transition: all 0.3s ease-in-out;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-card.hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .btn-primary {
+            --tw-translate-x: 0;
+            --tw-translate-y: 0;
+            --tw-rotate: 0;
+            --tw-skew-x: 0;
+            --tw-skew-y: 0;
+            --tw-scale-x: 1;
+            --tw-scale-y: 1;
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition-property: background-color, transform;
+            transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            --tw-scale-x: 1.05;
+            --tw-scale-y: 1.05;
+            transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+        }
+
+        .btn-primary:disabled {
+            background-color: #60a5fa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            --tw-translate-x: 0;
+            --tw-translate-y: 0;
+            --tw-rotate: 0;
+            --tw-skew-x: 0;
+            --tw-skew-y: 0;
+            --tw-scale-x: 1;
+            --tw-scale-y: 1;
+            background-color: #e5e7eb;
+            color: #1f2937;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition-property: background-color, transform;
+            transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+        }
+
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+            --tw-scale-x: 1.05;
+            --tw-scale-y: 1.05;
+            transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            transition-property: opacity;
+        }
+
+        .modal.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .lds-dual-ring {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+        }
+
+        .lds-dual-ring:after {
+            content: " ";
+            display: block;
+            width: 16px;
+            height: 16px;
+            margin: 2px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            border-color: #fff transparent #fff transparent;
+            animation: lds-dual-ring 1.2s linear infinite;
+        }
+
+        @keyframes lds-dual-ring {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+    <div id="app-login-modal" class="modal">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div class="flex justify-center mb-4">
+                <button id="login-tab-manual" class="tab-btn active">Manual Login</button>
+                <button id="login-tab-google" class="tab-btn">Google Sign In</button>
+            </div>
+            <div id="manual-login-form" class="login-form active">
+                <h2 class="text-xl font-bold text-gray-800 text-center mb-4">Sign In</h2>
+                <p class="text-center text-gray-500 mb-6">Enter your credentials to access the application.</p>
+                <div class="space-y-4">
+                    <input id="login-username" type="text" placeholder="Username"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <input id="login-password" type="password" placeholder="Password"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <p id="login-error" class="text-red-500 text-sm mt-2 text-center h-4"></p>
+                <button id="login-button" class="w-full btn-primary mt-4">Sign In</button>
+            </div>
+            <div id="google-login-form" class="login-form hidden">
+                <h2 class="text-xl font-bold text-gray-800 text-center mb-4">Sign In with Google</h2>
+                <p class="text-center text-gray-500 mb-6">Use your Google account for quick access.</p>
+                <button id="google-login-button" class="w-full flex items-center justify-center btn-primary mt-4">
+                    <i data-lucide="log-in" class="mr-2"></i> Sign In with Google
+                </button>
+                <div id="g_id_onload"
+                    data-client_id="1088677655752-3q53kqi8iqmoflbrpt84ngm9hfbqt266.apps.googleusercontent.com"></div>
+                <script src="https://accounts.google.com/gsi/client" async defer></script>
+            </div>
+            <div class="mt-4 text-center text-sm text-gray-500">
+                <p>Don't have an account? <a href="#" id="contact-admin-link"
+                        class="text-blue-600 hover:underline">Contact admin</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="contact-modal" class="modal hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 text-center mb-4">Contact Admin</h2>
+            <p class="text-gray-600 mb-4 text-center">It looks like your credentials were not provided or you are not in
+                the Email Karya group. To participate in Email Karya, please contact Manish Bhaiya (+91 9320000020) or
+                email the admin.
+            </p>
+            <div class="space-y-3">
+                <button id="email-admin-btn" class="w-full btn-primary flex items-center justify-center">
+                    <i data-lucide="mail" class="mr-2"></i> Email Admin
+                </button>
+                <button id="contact-close-btn" class="w-full btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="min-h-screen flex hidden">
+        <div class="w-64 bg-gray-800 text-white min-h-screen">
+            <div class="p-4">
+                <h1 class="text-xl font-bold">Outreach Automator</h1>
+            </div>
+            <nav class="mt-8">
+                <a href="#" id="nav-dashboard"
+                    class="nav-link active block px-4 py-2 text-gray-300 hover:bg-gray-700">Dashboard</a>
+                <a href="#" id="nav-campaign" class="nav-link block px-4 py-2 text-gray-300 hover:bg-gray-700">New
+                    Campaign</a>
+                <a href="#" id="nav-templates"
+                    class="nav-link block px-4 py-2 text-gray-300 hover:bg-gray-700">Templates</a>
+                <a href="#" id="nav-validation" class="nav-link block px-4 py-2 text-gray-300 hover:bg-gray-700">Email
+                    Validation</a>
+                <a href="#" id="nav-analytics"
+                    class="nav-link block px-4 py-2 text-gray-300 hover:bg-gray-700">Analytics</a>
+                <a href="#" id="nav-admin" class="nav-link block px-4 py-2 text-gray-300 hover:bg-gray-700 hidden">Admin
+                    Panel</a>
+            </nav>
+            <div class="absolute bottom-0 w-64 p-4">
+                <button id="profile-button" class="w-full text-left text-gray-300 hover:text-white">Profile</button>
+                <button id="logout-button" class="w-full text-left text-gray-300 hover:text-white mt-2">Logout</button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col">
+            <header class="bg-white shadow p-4">
+                <h2 id="page-title" class="text-2xl font-bold text-gray-800">Dashboard</h2>
+            </header>
+
+            <main class="flex-1 p-6 bg-gray-50">
+                <div id="dashboard-section" class="page-section">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-semibold text-gray-700">Today</h3>
+                            <p id="stats-today" class="text-3xl font-bold text-blue-600">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-semibold text-gray-700">Last 7 Days</h3>
+                            <p id="stats-week" class="text-3xl font-bold text-green-600">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-semibold text-gray-700">Last 30 Days</h3>
+                            <p id="stats-month" class="text-3xl font-bold text-purple-600">0</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-semibold text-gray-700">This Month</h3>
+                            <p id="stats-this-month" class="text-3xl font-bold text-red-600">0</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4">Recent Campaigns</h3>
+                            <div id="recent-campaigns" class="space-y-2">
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4">Quick Actions</h3>
+                            <div class="space-y-2">
+                                <button id="quick-new-campaign" class="w-full btn-primary text-left">Create New
+                                    Campaign</button>
+                                <button id="quick-manage-templates" class="w-full btn-secondary text-left">Manage
+                                    Templates</button>
+                                <button id="quick-validate-emails" class="w-full btn-secondary text-left">Validate
+                                    Emails</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="campaign-section" class="page-section hidden">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">New Campaign</h2>
+                            <button id="back-to-dashboard" class="btn-secondary">Back to Dashboard</button>
+                        </div>
+
+                        <main id="main-content" class="relative min-h-[500px]">
+                            <div id="step-1" class="step-card bg-white p-8 rounded-xl shadow-lg">
+                                <div class="flex items-center mb-6">
+                                    <div
+                                        class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">
+                                        1</div>
+                                    <h2 class="text-2xl font-semibold text-gray-700 ml-4">Choose Sender Account</h2>
+                                </div>
+                                <p class="text-gray-500 mb-4">Select which of your connected accounts will send this
+                                    campaign.</p>
+                                <select id="sender-account"
+                                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></select>
+                                <div class="mt-8 text-right"><button id="step1-next" class="btn-primary">Next: Select
+                                        Template
+                                        &rarr;</button></div>
+                            </div>
+
+                            <div id="step-2" class="step-card hidden bg-white p-8 rounded-xl shadow-lg">
+                                <div class="flex items-center mb-6">
+                                    <div
+                                        class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">
+                                        2</div>
+                                    <h2 class="text-2xl font-semibold text-gray-700 ml-4">Select Email Template</h2>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="template-options"></div>
+                                <div id="template-preview-container" class="mt-6 hidden">
+                                    <h3 class="font-semibold text-gray-600">Template Preview:</h3>
+                                    <div class="mt-2 p-4 border rounded-lg bg-gray-50">
+                                        <p class="font-bold text-gray-800" id="preview-subject"></p>
+                                        <hr class="my-2">
+                                        <p class="text-gray-600 whitespace-pre-wrap" id="preview-body"></p>
+                                    </div>
+                                </div>
+                                <div class="mt-8 flex justify-between"><button onclick="goToStep(1)"
+                                        class="btn-secondary">&larr;
+                                        Back</button><button id="step2-next" onclick="goToStep(3)" class="btn-primary"
+                                        disabled>Next: Add Recipients &rarr;</button></div>
+                            </div>
+
+                            <div id="step-3" class="step-card hidden bg-white p-8 rounded-xl shadow-lg">
+                                <div class="flex items-center mb-6">
+                                    <div
+                                        class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">
+                                        3</div>
+                                    <h2 class="text-2xl font-semibold text-gray-700 ml-4">Add Recipients</h2>
+                                </div>
+                                <p class="text-gray-500 mb-4">Paste recipient data below. Use CSV format:
+                                    `email,name,organization`.
+                                </p>
+                                <textarea id="recipient-input"
+                                    class="w-full h-48 p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                                    placeholder="example@email.com,John Doe,Example Inc.&#10;another@email.com,Jane Smith,Another Corp"></textarea>
+                                <p class="text-sm text-gray-500 mt-2"><span id="recipient-count">0</span> recipients
+                                    detected.</p>
+                                <div class="mt-8 flex justify-between"><button onclick="goToStep(2)"
+                                        class="btn-secondary">&larr;
+                                        Back</button><button id="step3-next" onclick="goToStep(4)" class="btn-primary"
+                                        disabled>Next: Review & Send &rarr;</button></div>
+                            </div>
+
+                            <div id="step-4" class="step-card hidden bg-white p-8 rounded-xl shadow-lg">
+                                <div class="flex items-center mb-6">
+                                    <div
+                                        class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">
+                                        4</div>
+                                    <h2 class="text-2xl font-semibold text-gray-700 ml-4">Review & Send</h2>
+                                </div>
+                                <div class="space-y-4 text-gray-700 p-4 border rounded-lg bg-gray-50">
+                                    <p><strong>From:</strong> <span id="review-sender"
+                                            class="font-mono text-blue-700"></span></p>
+                                    <p><strong>Template:</strong> <span id="review-template"
+                                            class="font-semibold text-blue-700"></span></p>
+                                    <p><strong>Recipients:</strong> <span id="review-recipient-count"
+                                            class="font-semibold text-blue-700">0</span></p>
+                                </div>
+                                <div class="mt-6">
+                                    <h3 class="font-semibold text-gray-600">Sample Previews:</h3>
+                                    <div id="review-samples"
+                                        class="space-y-4 mt-2 max-h-60 overflow-y-auto p-4 border rounded-lg bg-gray-50">
+                                    </div>
+                                </div>
+                                <div class="mt-6">
+                                    <h4 class="font-semibold text-gray-600 mb-2">Pre-flight Checklist</h4>
+                                    <label class="flex items-center space-x-3 p-2 cursor-pointer"><input type="checkbox"
+                                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 preflight-check"><span>I
+                                            have proofread the template for typos.</span></label>
+                                    <label class="flex items-center space-x-3 p-2 cursor-pointer"><input type="checkbox"
+                                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 preflight-check"><span>The
+                                            recipient list is clean and correctly formatted.</span></label>
+                                </div>
+                                <div class="mt-8 flex justify-between items-center">
+                                    <button onclick="goToStep(3)" class="btn-secondary">&larr; Back</button>
+                                    <button id="send-button" onclick="startCampaignExecution()"
+                                        class="btn-primary flex items-center space-x-2" disabled>
+                                        <i data-lucide="send"></i>
+                                        <span>Confirm & Send Campaign</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="step-5" class="step-card hidden bg-white p-8 rounded-xl shadow-lg">
+                                <div class="flex items-center mb-6">
+                                    <div
+                                        class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">
+                                        <i data-lucide="mail-check" class="w-5 h-5"></i>
+                                    </div>
+                                    <h2 class="text-2xl font-semibold text-gray-700 ml-4">Campaign in Progress...</h2>
+                                </div>
+                                <p class="text-gray-500 mb-4">Your emails are being sent. In a real app, you can close
+                                    this window;
+                                    the process continues on the server.</p>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%">
+                                    </div>
+                                </div>
+                                <div class="text-center text-gray-600 mb-4"><span id="progress-text">Sending 0 of
+                                        0...</span></div>
+                                <div id="sending-log"
+                                    class="w-full h-48 bg-gray-800 text-white font-mono text-sm rounded-lg p-4 overflow-y-auto">
+                                </div>
+                                <div id="campaign-complete"
+                                    class="hidden mt-6 text-center p-4 bg-green-100 text-green-800 rounded-lg">
+                                    <h3 class="font-bold text-lg">Campaign Complete!</h3>
+                                    <p><span id="final-sent-count">0</span> emails sent, <span
+                                            id="final-fail-count">0</span>
+                                        failed.</p>
+                                    <button onclick="resetApp()"
+                                        class="mt-4 bg-green-600 text-white hover:bg-green-700 font-semibold py-2 px-4 rounded-lg">Start
+                                        New Campaign</button>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+                </div>
+
+                <div id="templates-section" class="page-section hidden">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Email Templates</h2>
+                            <button id="create-template-btn" class="btn-primary">Create New
+                                Template</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="templates-grid">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="validation-section" class="page-section hidden">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Email Validation</h2>
+                            <button id="back-to-dashboard-from-validation" class="btn-secondary">Back to
+                                Dashboard</button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow mb-6">
+                            <h3 class="text-lg font-semibold mb-4">Email List Input</h3>
+                            <textarea id="emails-to-validate"
+                                class="w-full h-48 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                                placeholder="Enter emails, one per line (max 1000 emails)"></textarea>
+                            <div class="mt-2 text-sm text-gray-600">
+                                <span id="email-count">0</span> emails detected
+                            </div>
+                            <div class="mt-6 flex justify-between items-center">
+                                <div class="text-sm text-gray-600">
+                                    <span id="validation-status">Ready to validate</span>
+                                </div>
+                                <div class="space-x-3">
+                                    <button id="clear-input-btn" class="btn-secondary">Clear</button>
+                                    <button id="validate-emails-btn" class="btn-primary flex items-center">
+                                        <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>
+                                        Validate Emails
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="validation-results" class="bg-white p-6 rounded-lg shadow hidden">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="analytics-section" class="page-section hidden">
+                    <div class="max-w-7xl mx-auto">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Analytics Dashboard</h2>
+
+                        <!-- Key Metrics -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold text-gray-700">Total Emails</h3>
+                                <p id="analytics-total-emails" class="text-3xl font-bold text-blue-600">0</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold text-gray-700">Delivery Rate</h3>
+                                <p id="analytics-delivery-rate" class="text-3xl font-bold text-green-600">0%</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold text-gray-700">Bounce Rate</h3>
+                                <p id="analytics-bounce-rate" class="text-3xl font-bold text-red-600">0%</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold text-gray-700">Success Rate</h3>
+                                <p id="analytics-success-rate" class="text-3xl font-bold text-purple-600">0%</p>
+                            </div>
+                        </div>
+
+                        <!-- Charts Row -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold mb-4">Email Status Breakdown</h3>
+                                <canvas id="status-pie-chart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold mb-4">Email Type Distribution</h3>
+                                <canvas id="type-pie-chart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Time-based Analytics -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold mb-4">Today</h3>
+                                <div id="analytics-today" class="space-y-2">
+                                    <div class="flex justify-between"><span>Sent:</span><span id="today-sent" class="font-bold text-green-600">0</span></div>
+                                    <div class="flex justify-between"><span>Failed:</span><span id="today-failed" class="font-bold text-red-600">0</span></div>
+                                    <div class="flex justify-between"><span>Bounced:</span><span id="today-bounced" class="font-bold text-orange-600">0</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold mb-4">Last 7 Days</h3>
+                                <div id="analytics-week" class="space-y-2">
+                                    <div class="flex justify-between"><span>Sent:</span><span id="week-sent" class="font-bold text-green-600">0</span></div>
+                                    <div class="flex justify-between"><span>Failed:</span><span id="week-failed" class="font-bold text-red-600">0</span></div>
+                                    <div class="flex justify-between"><span>Bounced:</span><span id="week-bounced" class="font-bold text-orange-600">0</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold mb-4">Last 30 Days</h3>
+                                <div id="analytics-month" class="space-y-2">
+                                    <div class="flex justify-between"><span>Sent:</span><span id="month-sent" class="font-bold text-green-600">0</span></div>
+                                    <div class="flex justify-between"><span>Failed:</span><span id="month-failed" class="font-bold text-red-600">0</span></div>
+                                    <div class="flex justify-between"><span>Bounced:</span><span id="month-bounced" class="font-bold text-orange-600">0</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Stats -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold mb-4">Email Distribution</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span>Campaign Emails:</span>
+                                        <span id="campaign-emails-count" class="font-bold text-blue-600">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>Individual Emails:</span>
+                                        <span id="individual-emails-count" class="font-bold text-purple-600">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-semibold mb-4">Performance Summary</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span>Total Sent:</span>
+                                        <span id="total-sent" class="font-bold text-green-600">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>Total Failed:</span>
+                                        <span id="total-failed" class="font-bold text-red-600">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>Total Bounced:</span>
+                                        <span id="total-bounced" class="font-bold text-orange-600">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="admin-panel-modal" class="modal hidden">
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Admin User Management
+                        </h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="py-2 px-4 border-b">ID</th>
+                                        <th class="py-2 px-4 border-b">Username</th>
+                                        <th class="py-2 px-4 border-b">Email</th>
+                                        <th class="py-2 px-4 border-b">Role</th>
+                                        <th class="py-2 px-4 border-b">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-list-table">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-6 p-4 border rounded-lg bg-gray-50">
+                            <h3 class="font-semibold text-lg mb-2">Create New User</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <input id="new-user-username" type="text" placeholder="Username"
+                                    class="p-2 border rounded">
+                                <input id="new-user-email" type="email" placeholder="Email" class="p-2 border rounded">
+                                <input id="new-user-password" type="password" placeholder="Password"
+                                    class="p-2 border rounded">
+                            </div>
+                            <div class="mt-2 flex items-center justify-between">
+                                <select id="new-user-role" class="p-2 border rounded bg-white">
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                <button id="add-user-btn" class="btn-primary">Add User</button>
+                            </div>
+                            <p id="admin-message" class="text-sm mt-2 text-center h-4"></p>
+                        </div>
+                        <div class="mt-4 text-right">
+                            <button id="admin-panel-close-btn" class="btn-secondary">Close</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="edit-user-modal" class="modal hidden">
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+                        <h2 class="text-xl font-bold text-gray-800 text-center mb-4">Edit User</h2>
+                        <input type="hidden" id="edit-user-id">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="edit-user-username">Username</label>
+                                <input id="edit-user-username" type="text" class="w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label for="edit-user-email">Email</label>
+                                <input id="edit-user-email" type="email" class="w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label for="edit-user-role">Role</label>
+                                <select id="edit-user-role" class="w-full p-2 border rounded bg-white">
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-between">
+                            <button id="edit-user-close-btn" class="btn-secondary">Cancel</button>
+                            <button id="edit-user-save-btn" class="btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="profile-modal" class="modal hidden">
+                    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+                        <h2 class="text-xl font-bold text-gray-800 text-center mb-4">Your Profile</h2>
+                        <p class="text-center text-gray-500 mb-6">Update your username and email address.
+                        </p>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="profile-username"
+                                    class="block text-sm font-medium text-gray-700">Username</label>
+                                <input id="profile-username" type="text" placeholder="Username"
+                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="profile-email" class="block text-sm font-medium text-gray-700">Email</label>
+                                <input id="profile-email" type="email" placeholder="Email"
+                                    class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <p id="profile-message" class="text-sm mt-2 text-center h-4"></p>
+                        <div class="mt-4 flex justify-end">
+                            <button id="profile-save-btn" class="btn-primary">Save Profile</button>
+                        </div>
+                        <hr class="my-6">
+                        <h3 class="text-lg font-bold text-gray-800 text-center mb-4">Change Password</h3>
+                        <div class="space-y-4">
+                            <input id="current-password" type="password" placeholder="Current Password"
+                                class="w-full p-3 border border-gray-300 rounded-lg">
+                            <input id="new-password" type="password" placeholder="New Password"
+                                class="w-full p-3 border border-gray-300 rounded-lg">
+                        </div>
+                        <p id="password-message" class="text-sm mt-2 text-center h-4"></p>
+                        <div class="mt-4 flex justify-between">
+                            <button id="profile-close-btn" class="btn-secondary">Close</button>
+                            <button id="change-password-btn" class="btn-primary">Change Password</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA and STATE ---
+        const ALL_SENDER_ACCOUNTS = [
+            // { id: 1, email: 'guptanikhil2056@gmail.com', name: 'Nikhil Personal', type: 'personal' },
+            { id: 2, email: 'info@bhavishyamalika.com', name: 'Bhavishya Malika Info', type: 'work' },
+            { id: 3, email: 'admin@kalkiavatar.org', name: 'Kalki Avatar Admin', type: 'work' }
+        ];
+        let currentState = { currentStep: 1, sender: null, template: null, recipients: [] };
+        let userData = null; // {username, role, email}
+        const BACKEND_URL = 'http://localhost:8000';
+        const TOKEN_KEY = 'auth_token';
+        let SENDER_ACCOUNTS = []; // Dynamic based on user
+
+        // --- DOM Elements ---
+        const appLoginModal = document.getElementById('app-login-modal');
+        const mainAppContainer = document.getElementById('app');
+        const logoutButton = document.getElementById('logout-button');
+        const profileButton = document.getElementById('profile-button');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pageTitle = document.getElementById('page-title');
+
+        // --- Helper Functions ---
+        function getToken() { return localStorage.getItem(TOKEN_KEY); }
+        function setToken(token) { localStorage.setItem(TOKEN_KEY, token); }
+        function clearAuth() {
+            localStorage.removeItem(TOKEN_KEY);
+            userData = null;
+            SENDER_ACCOUNTS = [];
+            mainAppContainer.classList.add('hidden');
+            appLoginModal.classList.remove('hidden');
+            logoutButton.classList.add('hidden');
+            goToStep(1);
+        }
+
+        async function apiFetch(url, options = {}) {
+            const token = getToken();
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            try {
+                const response = await fetch(`${BACKEND_URL}${url}`, { ...options, headers });
+                if (!response.ok) {
+                    if (response.status === 401) { clearAuth(); throw new Error('Session expired. Please log in again.'); }
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Request failed');
+                }
+                // Handle 204 No Content responses (no body to parse)
+                if (response.status === 204) {
+                    return null;
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API fetch error:', error);
+                throw error;
+            }
+        }
+
+        // --- Navigation ---
+        function showPage(pageId, title) {
+            document.querySelectorAll('.page-section').forEach(section => section.classList.add('hidden'));
+            const targetSection = document.getElementById(pageId);
+            if (targetSection) targetSection.classList.remove('hidden');
+            navLinks.forEach(link => link.classList.remove('active'));
+            const navLink = document.getElementById('nav-' + pageId.replace('-section', ''));
+            if (navLink) navLink.classList.add('active');
+            pageTitle.textContent = title;
+
+            if (pageId === 'templates-section') loadTemplates();
+            else if (pageId === 'dashboard-section') loadDashboardData();
+            else if (pageId === 'analytics-section') loadAnalyticsData();
+        }
+
+        // --- Template Management ---
+        async function loadTemplates() {
+            try {
+                const templates = await apiFetch('/templates');
+                const grid = document.getElementById('templates-grid');
+                grid.innerHTML = '';
+                templates.forEach(template => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-4 rounded-lg shadow hover:shadow-lg transition';
+                    card.innerHTML = `
+                        <h3 class="font-bold text-lg">${template.name}</h3>
+                        <p class="text-gray-600 text-sm">${template.category}</p>
+                        <p class="text-gray-800 mt-2">${template.subject}</p>
+                        <div class="mt-4 flex justify-between">
+                            <button class="text-blue-500 hover:underline" onclick="editTemplate('${template.id}')">Edit</button>
+                            <button class="text-red-500 hover:underline" onclick="deleteTemplate('${template.id}', '${template.name}')">Delete</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                document.getElementById('templates-grid').innerHTML = `<div class="text-red-500 p-4">Error loading templates: ${error.message}</div>`;
+            }
+        }
+
+        async function showCreateTemplateModal() {
+            const name = prompt('Template name:');
+            const subject = prompt('Email subject:');
+            const body = prompt('Email body:');
+            const category = prompt('Category:');
+            if (name && subject && body && category) {
+                try {
+                    await apiFetch('/templates', { method: 'POST', body: JSON.stringify({ name, subject, body, category }) });
+                    loadTemplates();
+                } catch (error) { alert(`Failed to create template: ${error.message}`); }
+            }
+        }
+
+        async function editTemplate(templateId) {
+            const newName = prompt('New template name:'); // Simple edit for now
+            if (newName) {
+                try {
+                    await apiFetch(`/templates/${templateId}`, { method: 'PUT', body: JSON.stringify({ name: newName }) });
+                    loadTemplates();
+                } catch (error) { alert(`Failed to update template: ${error.message}`); }
+            }
+        }
+
+        async function deleteTemplate(templateId, name) {
+            if (confirm(`Delete template "${name}"?`)) {
+                try {
+                    await apiFetch(`/templates/${templateId}`, { method: 'DELETE' });
+                    loadTemplates();
+                } catch (error) { alert(`Failed to delete template: ${error.message}`); }
+            }
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            document.getElementById('emails-to-validate').addEventListener('input', updateEmailCount);
+            document.getElementById('login-tab-manual').addEventListener('click', () => switchLoginTab('manual'));
+            document.getElementById('login-tab-google').addEventListener('click', () => switchLoginTab('google'));
+            document.getElementById('login-button').addEventListener('click', handleManualLogin);
+            document.getElementById('google-login-button').addEventListener('click', handleGoogleLogin);
+            logoutButton.addEventListener('click', clearAuth);
+            profileButton.addEventListener('click', openProfileModal);
+            document.getElementById('profile-close-btn').addEventListener('click', () => document.getElementById('profile-modal').classList.add('hidden'));
+            document.getElementById('profile-save-btn').addEventListener('click', handleProfileSave);
+            document.getElementById('change-password-btn').addEventListener('click', handleChangePassword);
+            document.getElementById('nav-admin').addEventListener('click', (e) => { e.preventDefault(); openAdminPanel(); showPage('dashboard-section', 'Dashboard'); });
+            document.getElementById('admin-panel-close-btn').addEventListener('click', () => document.getElementById('admin-panel-modal').classList.add('hidden'));
+            document.getElementById('add-user-btn').addEventListener('click', handleAddUser);
+            document.getElementById('edit-user-close-btn').addEventListener('click', () => document.getElementById('edit-user-modal').classList.add('hidden'));
+            document.getElementById('edit-user-save-btn').addEventListener('click', handleEditUserSave);
+            document.getElementById('contact-admin-link').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('contact-modal').classList.remove('hidden'); });
+            document.getElementById('contact-close-btn').addEventListener('click', () => document.getElementById('contact-modal').classList.add('hidden'));
+            document.getElementById('email-admin-btn').addEventListener('click', () => {
+                const subject = encodeURIComponent('I want to do the email karya too! Please guide me further!');
+                const body = encodeURIComponent('Hello Admin,\n\nI am interested in joining the email karya group. Please guide me on how to get started.\n\nThanks!');
+                window.location.href = `mailto:admin@kalkiavatar.org?subject=${subject}&body=${body}`;
+            });
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = link.id.replace('nav-', '');
+                    const titles = { 'dashboard': 'Dashboard', 'campaign': 'New Campaign', 'templates': 'Email Templates', 'validation': 'Email Validation', 'analytics': 'Analytics' };
+                    showPage(page + '-section', titles[page]);
+                });
+            });
+            document.getElementById('quick-new-campaign').addEventListener('click', () => showPage('campaign-section', 'New Campaign'));
+            document.getElementById('quick-manage-templates').addEventListener('click', () => showPage('templates-section', 'Email Templates'));
+            document.getElementById('quick-validate-emails').addEventListener('click', () => showPage('validation-section', 'Email Validation'));
+            document.getElementById('back-to-dashboard').addEventListener('click', () => showPage('dashboard-section', 'Dashboard'));
+            document.getElementById('validate-emails-btn').addEventListener('click', handleValidateEmails);
+            document.getElementById('create-template-btn').addEventListener('click', () => showCreateTemplateModal());
+            document.getElementById('step1-next').addEventListener('click', handleStep1Next);
+            document.getElementById('recipient-input').addEventListener('input', handleRecipientInput);
+            document.querySelectorAll('.preflight-check').forEach(el => el.addEventListener('change', checkPreflight));
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenFromUrl = urlParams.get('token');
+            const contactAdminFlag = urlParams.get('contact_admin');
+            if (contactAdminFlag) {
+                document.getElementById('contact-modal').classList.remove('hidden');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (tokenFromUrl) {
+                setToken(tokenFromUrl);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                loadUserDataAndInitApp();
+            } else if (getToken()) {
+                loadUserDataAndInitApp();
+            }
+        });
+
+        function loadUserDataAndInitApp() {
+            loadUserData().then(() => {
+                appLoginModal.classList.add('hidden');
+                mainAppContainer.classList.remove('hidden');
+                mainAppContainer.classList.add('flex');
+                logoutButton.classList.remove('hidden');
+                profileButton.classList.remove('hidden');
+                if (userData.role === 'admin') document.getElementById('nav-admin').classList.remove('hidden');
+                initializeApp();
+            }).catch(clearAuth);
+        }
+
+        function switchLoginTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.login-form').forEach(form => form.classList.add('hidden'));
+            if (tab === 'manual') {
+                document.getElementById('login-tab-manual').classList.add('active');
+                document.getElementById('manual-login-form').classList.remove('hidden');
+            } else {
+                document.getElementById('login-tab-google').classList.add('active');
+                document.getElementById('google-login-form').classList.remove('hidden');
+            }
+        }
+
+        async function handleManualLogin() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            if (!username || !password) { errorEl.textContent = 'Please enter username and password.'; return; }
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                const response = await fetch(`${BACKEND_URL}/token`, { method: 'POST', body: formData });
+                if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || 'Login failed'); }
+                const data = await response.json();
+                setToken(data.access_token);
+                loadUserDataAndInitApp();
+            } catch (error) { errorEl.textContent = error.message; }
+        }
+
+        function handleGoogleLogin() { window.location.href = `${BACKEND_URL}/auth/google`; }
+
+        function openProfileModal() {
+            if (userData) {
+                document.getElementById('profile-username').value = userData.username;
+                document.getElementById('profile-email').value = userData.email;
+            }
+            document.getElementById('profile-message').textContent = '';
+            document.getElementById('password-message').textContent = '';
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        async function handleProfileSave() {
+            const username = document.getElementById('profile-username').value;
+            const email = document.getElementById('profile-email').value;
+            const messageEl = document.getElementById('profile-message');
+            try {
+                userData = await apiFetch('/users/me/update', { method: 'PUT', body: JSON.stringify({ username, email }) });
+                messageEl.textContent = 'Profile updated successfully!';
+                messageEl.classList.add('text-green-500');
+                setTimeout(() => document.getElementById('profile-modal').classList.add('hidden'), 1500);
+            } catch (error) {
+                messageEl.textContent = error.message;
+                messageEl.classList.add('text-red-500');
+            }
+        }
+
+        async function handleChangePassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const messageEl = document.getElementById('password-message');
+            if (!currentPassword || !newPassword) { messageEl.textContent = "Please fill in both password fields."; messageEl.className = 'text-red-500 text-sm mt-2 text-center h-4'; return; }
+            try {
+                await apiFetch('/users/me/change-password', { method: 'PUT', body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) });
+                messageEl.textContent = "Password updated successfully!";
+                messageEl.className = 'text-green-500 text-sm mt-2 text-center h-4';
+                document.getElementById('current-password').value = '';
+                document.getElementById('new-password').value = '';
+                setTimeout(() => document.getElementById('profile-modal').classList.add('hidden'), 1500);
+            } catch (error) { messageEl.textContent = `Error: ${error.message}`; messageEl.className = 'text-red-500 text-sm mt-2 text-center h-4'; }
+        }
+
+        async function loadUserData() {
+            try {
+                userData = await apiFetch('/users/me');
+                if (userData.role === 'admin') SENDER_ACCOUNTS = [...ALL_SENDER_ACCOUNTS];
+                else SENDER_ACCOUNTS = [{ id: 1, email: userData.email, name: `${userData.username} Personal`, type: 'personal' }];
+            } catch (error) { console.error('Failed to load user data:', error); clearAuth(); throw error; }
+        }
+
+        // --- Admin Panel Functions ---
+        async function openAdminPanel() {
+            document.getElementById('admin-panel-modal').classList.remove('hidden');
+            await refreshUserList();
+        }
+
+        async function refreshUserList() {
+            const userListTable = document.getElementById('user-list-table');
+            userListTable.innerHTML = '<tr><td colspan="5" class="text-center p-4">Loading...</td></tr>';
+            try {
+                const users = await apiFetch('/admin/users');
+                userListTable.innerHTML = '';
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td class="py-2 px-4 border-b">${user.id}</td><td class="py-2 px-4 border-b">${user.username}</td><td class="py-2 px-4 border-b">${user.email}</td><td class="py-2 px-4 border-b">${user.role}</td><td class="py-2 px-4 border-b"><button class="text-blue-500 hover:underline" onclick="handleEditUser(${user.id})">Edit</button><button class="text-red-500 hover:underline ml-2" onclick="handleDeleteUser(${user.id}, '${user.username}')">Delete</button></td>`;
+                    userListTable.appendChild(row);
+                });
+            } catch (error) { userListTable.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-red-500">Error loading users: ${error.message}</td></tr>`; }
+        }
+
+        async function handleAddUser() {
+            const username = document.getElementById('new-user-username').value;
+            const email = document.getElementById('new-user-email').value;
+            const password = document.getElementById('new-user-password').value;
+            const role = document.getElementById('new-user-role').value;
+            const messageEl = document.getElementById('admin-message');
+
+            try {
+                await apiFetch('/admin/users', { method: 'POST', body: JSON.stringify({ username, email, password, role }) });
+                messageEl.textContent = "User created successfully!";
+                messageEl.className = 'text-green-500 text-sm mt-2 text-center h-4';
+                document.getElementById('new-user-username').value = '';
+                document.getElementById('new-user-email').value = '';
+                document.getElementById('new-user-password').value = '';
+                await refreshUserList();
+            } catch (error) { messageEl.textContent = `Error: ${error.message}`; messageEl.className = 'text-red-500 text-sm mt-2 text-center h-4'; }
+        }
+
+        async function handleEditUser(userId) {
+            try {
+                const users = await apiFetch('/admin/users');
+                const user = users.find(u => u.id === userId);
+                if (user) {
+                    document.getElementById('edit-user-id').value = user.id;
+                    document.getElementById('edit-user-username').value = user.username;
+                    document.getElementById('edit-user-email').value = user.email;
+                    document.getElementById('edit-user-role').value = user.role;
+                    document.getElementById('edit-user-modal').classList.remove('hidden');
+                }
+            } catch (error) { alert(`Could not fetch user details: ${error.message}`); }
+        }
+
+        async function handleEditUserSave() {
+            const userId = document.getElementById('edit-user-id').value;
+            const username = document.getElementById('edit-user-username').value;
+            const email = document.getElementById('edit-user-email').value;
+            const role = document.getElementById('edit-user-role').value;
+            try {
+                await apiFetch(`/admin/users/${userId}`, { method: 'PUT', body: JSON.stringify({ username, email, role }) });
+                document.getElementById('edit-user-modal').classList.add('hidden');
+                await refreshUserList();
+            } catch (error) { alert(`Failed to update user: ${error.message}`); }
+        }
+
+        async function handleDeleteUser(userId, username) {
+            if (confirm(`Are you sure you want to delete the user "${username}"?`)) {
+                try {
+                    await apiFetch(`/admin/users/${userId}`, { method: 'DELETE' });
+                    await refreshUserList();
+                } catch (error) { alert(`Failed to delete user: ${error.message}`); }
+            }
+        }
+
+        function updateEmailCount() {
+            const emailsText = document.getElementById('emails-to-validate').value;
+            const emails = emailsText.split('\n').map(e => e.trim()).filter(e => e);
+            const count = emails.length;
+            document.getElementById('email-count').textContent = count;
+
+            if (count > 1000) {
+                document.getElementById('email-count').className = 'text-red-600 font-semibold';
+                document.getElementById('validation-status').textContent = 'Warning: Maximum 1000 emails allowed';
+                document.getElementById('validate-emails-btn').disabled = true;
+            } else if (count > 0) {
+                document.getElementById('email-count').className = 'text-green-600 font-semibold';
+                document.getElementById('validation-status').textContent = 'Ready to validate';
+                document.getElementById('validate-emails-btn').disabled = false;
+            } else {
+                document.getElementById('email-count').className = '';
+                document.getElementById('validation-status').textContent = 'Enter emails to validate';
+                document.getElementById('validate-emails-btn').disabled = true;
+            }
+        }
+
+        // --- MAIN APP LOGIC ---
+        async function initializeApp() {
+            populateSenderAccounts();
+            try {
+                const apiTemplates = await apiFetch('/templates');
+                populateTemplates(apiTemplates);
+            } catch (error) {
+                console.error("Could not populate templates:", error);
+            }
+            loadDashboardData();
+            showPage('dashboard-section', 'Dashboard');
+        }
+
+        async function loadDashboardData() {
+            try {
+                const stats = await apiFetch('/dashboard/stats');
+                document.getElementById('stats-today').textContent = stats.email_stats.today;
+                document.getElementById('stats-week').textContent = stats.email_stats.last_7_days;
+                document.getElementById('stats-month').textContent = stats.email_stats.last_30_days;
+                document.getElementById('stats-this-month').textContent = stats.email_stats.this_month;
+                const recentCampaignsEl = document.getElementById('recent-campaigns');
+                recentCampaignsEl.innerHTML = '';
+                stats.recent_campaigns.forEach(campaign => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-gray-50 rounded';
+                    div.innerHTML = `<p class="font-semibold">${campaign.name}</p><p class="text-sm text-gray-600">${new Date(campaign.created_at).toLocaleDateString()}</p>`;
+                    recentCampaignsEl.appendChild(div);
+                });
+            } catch (error) { console.error('Failed to load dashboard data:', error); }
+        }
+
+        async function loadAnalyticsData() {
+            try {
+                const analytics = await apiFetch('/analytics');
+
+                // Update key metrics
+                document.getElementById('analytics-total-emails').textContent = analytics.total_emails;
+                document.getElementById('analytics-delivery-rate').textContent = `${analytics.delivery_stats.delivery_rate}%`;
+                document.getElementById('analytics-bounce-rate').textContent = `${analytics.delivery_stats.bounce_rate}%`;
+                document.getElementById('analytics-success-rate').textContent = `${analytics.delivery_stats.success_rate}%`;
+
+                // Update time-based stats
+                document.getElementById('today-sent').textContent = analytics.time_based.today.sent;
+                document.getElementById('today-failed').textContent = analytics.time_based.today.failed;
+                document.getElementById('today-bounced').textContent = analytics.time_based.today.bounced;
+
+                document.getElementById('week-sent').textContent = analytics.time_based.last_7_days.sent;
+                document.getElementById('week-failed').textContent = analytics.time_based.last_7_days.failed;
+                document.getElementById('week-bounced').textContent = analytics.time_based.last_7_days.bounced;
+
+                document.getElementById('month-sent').textContent = analytics.time_based.last_30_days.sent;
+                document.getElementById('month-failed').textContent = analytics.time_based.last_30_days.failed;
+                document.getElementById('month-bounced').textContent = analytics.time_based.last_30_days.bounced;
+
+                // Update email distribution
+                document.getElementById('campaign-emails-count').textContent = analytics.campaign_emails;
+                document.getElementById('individual-emails-count').textContent = analytics.individual_emails;
+
+                // Update performance summary
+                document.getElementById('total-sent').textContent = analytics.status_breakdown.sent;
+                document.getElementById('total-failed').textContent = analytics.status_breakdown.failed;
+                document.getElementById('total-bounced').textContent = analytics.status_breakdown.bounced;
+
+                // Create status breakdown pie chart
+                createStatusPieChart(analytics.status_breakdown);
+
+                // Create email type distribution pie chart
+                createTypePieChart(analytics.campaign_emails, analytics.individual_emails);
+
+            } catch (error) {
+                console.error('Failed to load analytics data:', error);
+                // Show error message in analytics section
+                document.getElementById('analytics-section').innerHTML = `
+                    <div class="max-w-6xl mx-auto">
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            <strong>Error:</strong> Failed to load analytics data. ${error.message}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function createStatusPieChart(statusData) {
+            const ctx = document.getElementById('status-pie-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Sent', 'Failed', 'Bounced'],
+                    datasets: [{
+                        data: [statusData.sent, statusData.failed, statusData.bounced],
+                        backgroundColor: [
+                            '#10B981', // green
+                            '#EF4444', // red
+                            '#F59E0B'  // orange
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTypePieChart(campaignEmails, individualEmails) {
+            const ctx = document.getElementById('type-pie-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Campaign Emails', 'Individual Emails'],
+                    datasets: [{
+                        data: [campaignEmails, individualEmails],
+                        backgroundColor: [
+                            '#3B82F6', // blue
+                            '#8B5CF6'  // purple
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // This function runs when the button is clicked
+        async function handleValidateEmails() {
+            const emailsText = document.getElementById('emails-to-validate').value;
+            let emails = emailsText.split('\n').map(e => e.trim()).filter(e => e);
+
+            if (emails.length === 0) {
+                alert('Please enter some emails to validate.');
+                return;
+            }
+
+            const validateButton = document.getElementById('validate-emails-btn');
+            validateButton.disabled = true;
+            validateButton.innerHTML = `<div class="lds-dual-ring"></div> Validating...`;
+            document.getElementById('validation-results').classList.add('hidden');
+
+            try {
+                const response = await apiFetch('/email/validate', {
+                    method: 'POST',
+                    body: JSON.stringify({ emails: emails })
+                });
+                displayValidationResults(response.results);
+            } catch (error) {
+                alert(`Validation failed: ${error.message}`);
+            } finally {
+                validateButton.disabled = false;
+                validateButton.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Validate Emails`;
+                lucide.createIcons();
+            }
+        }
+
+        // This function displays the results returned from the server
+        // This function displays the results returned from the server
+// This function displays the results returned from the server
+function displayValidationResults(results) {
+    const resultsContainer = document.getElementById('validation-results');
+    const validCount = results.filter(r => r.valid && r.reason === "Verified Mailbox").length;
+    const riskyCount = results.filter(r => r.valid && r.reason !== "Verified Mailbox").length;
+    const invalidCount = results.filter(r => !r.valid).length;
+
+    // Create the HTML for the results
+    resultsContainer.innerHTML = `
+        <h3 class="text-lg font-semibold mb-4">Validation Results</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="bg-green-100 p-4 rounded-lg text-center">
+                <div class="text-2xl font-bold text-green-700">${validCount}</div>
+                <div class="text-sm text-green-800">Verified</div>
+            </div>
+            <div class="bg-yellow-100 p-4 rounded-lg text-center">
+                <div class="text-2xl font-bold text-yellow-700">${riskyCount}</div>
+                <div class="text-sm text-yellow-800">Risky (Accepts-All)</div>
+            </div>
+            <div class="bg-red-100 p-4 rounded-lg text-center">
+                <div class="text-2xl font-bold text-red-700">${invalidCount}</div>
+                <div class="text-sm text-red-800">Invalid</div>
+            </div>
+        </div>
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+            ${results.map(result => {
+                let icon = 'x-circle';
+                let colors = 'bg-red-50 border-red-200 text-red-600';
+                if (result.valid) {
+                    if (result.reason === "Verified Mailbox") {
+                        icon = 'check-circle';
+                        colors = 'bg-green-50 border-green-200 text-green-600';
+                    } else { // Catch-all / Risky
+                        icon = 'mail-question';
+                        colors = 'bg-yellow-50 border-yellow-200 text-yellow-600';
+                    }
+                }
+                
+                return `
+                <div class="p-3 rounded-lg border ${colors.split(' ')[0]} ${colors.split(' ')[1]}">
+                    <div class="flex items-center">
+                        <i data-lucide="${icon}" class="w-5 h-5 ${colors.split(' ')[2]} mr-3 flex-shrink-0"></i>
+                        <div>
+                            <div class="font-medium text-gray-800">${result.email}</div>
+                            <div class="text-sm text-gray-600">${result.reason}</div>
+                        </div>
+                    </div>
+                </div>
+            `}).join('')}
+        </div>
+    `;
+    
+    resultsContainer.classList.remove('hidden');
+    lucide.createIcons(); // Redraw icons inside the new HTML
+}
+        function populateSenderAccounts() {
+            const select = document.getElementById('sender-account');
+            select.innerHTML = '';
+            SENDER_ACCOUNTS.forEach((acc, index) => {
+                const option = document.createElement('option');
+                option.value = acc.id;
+                option.textContent = `${acc.name} (${acc.email})`;
+                select.appendChild(option);
+            });
+            if (SENDER_ACCOUNTS.length === 0) select.innerHTML = '<option disabled>No senders available</option>';
+        }
+
+        function handleStep1Next() {
+            const senderId = document.getElementById('sender-account').value;
+            const selectedSender = SENDER_ACCOUNTS.find(s => s.id == senderId);
+            if (!selectedSender) { alert('Please select a sender.'); return; }
+            currentState.sender = selectedSender;
+            goToStep(2);
+        }
+
+        function populateTemplates(templatesToPopulate) {
+            const container = document.getElementById('template-options');
+            container.innerHTML = '';
+            templatesToPopulate.forEach(tmpl => {
+                const card = document.createElement('div');
+                card.className = 'p-4 border rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition';
+                card.dataset.templateId = tmpl.id;
+                card.innerHTML = `<div class="flex items-center"><i data-lucide="file-text" class="w-8 h-8 text-blue-600 mr-4"></i><div><h4 class="font-bold text-gray-800">${tmpl.name}</h4><p class="text-sm text-gray-500">${tmpl.category}</p></div></div>`;
+                card.addEventListener('click', () => selectTemplate(tmpl));
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function selectTemplate(templateObject) {
+            currentState.template = templateObject;
+            document.querySelectorAll('#template-options > div').forEach(div => {
+                div.classList.remove('bg-blue-100', 'border-blue-500');
+                if (div.dataset.templateId == templateObject.id) div.classList.add('bg-blue-100', 'border-blue-500');
+            });
+            document.getElementById('preview-subject').textContent = `Subject: ${currentState.template.subject}`;
+            document.getElementById('preview-body').textContent = currentState.template.body;
+            document.getElementById('template-preview-container').classList.remove('hidden');
+            document.getElementById('step2-next').disabled = false;
+        }
+
+        function handleRecipientInput() {
+            const lines = document.getElementById('recipient-input').value.trim().split('\n').filter(line => line);
+            currentState.recipients = lines.map(line => {
+                const parts = line.split(',');
+                return { email: parts[0]?.trim() || '', name: parts[1]?.trim() || 'Valued Contact', organization: parts[2]?.trim() || 'Your Organization' };
+            }).filter(r => r.email && r.email.includes('@'));
+            document.getElementById('recipient-count').textContent = currentState.recipients.length;
+            document.getElementById('step3-next').disabled = currentState.recipients.length === 0;
+        }
+
+        function goToStep(stepNumber) {
+            currentState.currentStep = stepNumber;
+            document.querySelectorAll('.step-card').forEach(card => card.classList.add('hidden'));
+            const currentStepCard = document.getElementById(`step-${stepNumber}`);
+            if (currentStepCard) currentStepCard.classList.remove('hidden');
+            if (stepNumber === 4) prepareReview();
+        }
+
+        function prepareReview() {
+            document.getElementById('review-sender').textContent = currentState.sender.email;
+            document.getElementById('review-template').textContent = currentState.template.name;
+            document.getElementById('review-recipient-count').textContent = currentState.recipients.length;
+            const samplesContainer = document.getElementById('review-samples');
+            samplesContainer.innerHTML = '';
+            currentState.recipients.slice(0, 3).forEach(recipient => {
+                const filledSubject = fillTemplate(currentState.template.subject, recipient);
+                const filledBody = fillTemplate(currentState.template.body, recipient);
+                samplesContainer.innerHTML += `<div class="p-3 border-t first:border-t-0"><p class="text-sm text-gray-500">To: ${recipient.email}</p><p class="font-bold text-gray-800">${filledSubject}</p><hr class="my-1"><p class="text-gray-600 text-sm whitespace-pre-wrap">${filledBody}</p></div>`;
+            });
+            checkPreflight();
+        }
+
+        function checkPreflight() {
+            const allChecked = [...document.querySelectorAll('.preflight-check')].every(c => c.checked);
+            document.getElementById('send-button').disabled = !allChecked;
+        }
+
+        function fillTemplate(templateString, recipient) {
+            return templateString.replace(/\{\{name\}\}/g, recipient.name).replace(/\{\{organization\}\}/g, recipient.organization).replace(/\{\{email\}\}/g, recipient.email);
+        }
+
+        async function sendEmailViaBackend(fromEmail, toEmail, subject, body) {
+            return await apiFetch('/api/send-email', { method: 'POST', body: JSON.stringify({ from_email: fromEmail, to_email: toEmail, subject: subject, body: body }) });
+        }
+
+        async function startCampaignExecution() {
+            goToStep(5);
+            const sendButton = document.getElementById('send-button');
+            sendButton.disabled = true;
+            sendButton.innerHTML = `<div class="lds-dual-ring"></div><span>Sending...</span>`;
+            const logContainer = document.getElementById('sending-log');
+            logContainer.innerHTML = '';
+            let sentCount = 0, failCount = 0;
+            const totalRecipients = currentState.recipients.length;
+            const logMessage = (message, color = 'text-gray-400') => {
+                logContainer.innerHTML += `<p><span class="text-gray-500">${new Date().toLocaleTimeString()}:</span> <span class="${color}">${message}</span></p>`;
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            logMessage(`Starting campaign from ${currentState.sender.email}...`);
+            for (let i = 0; i < totalRecipients; i++) {
+                const recipient = currentState.recipients[i];
+                document.getElementById('progress-text').textContent = `Sending ${i + 1} of ${totalRecipients}...`;
+                const subject = fillTemplate(currentState.template.subject, recipient);
+                const body = fillTemplate(currentState.template.body, recipient);
+                try {
+                    await sendEmailViaBackend(currentState.sender.email, recipient.email, subject, body);
+                    logMessage(`SUCCESS: Sent to ${recipient.email}.`, 'text-green-400');
+                    sentCount++;
+                } catch (error) {
+                    logMessage(`FAILED: ${recipient.email}. (Reason: ${error.message})`, 'text-red-400');
+                    failCount++;
+                }
+                document.getElementById('progress-bar').style.width = `${((i + 1) / totalRecipients) * 100}%`;
+            }
+            logMessage(`Campaign finished!`, 'text-blue-400');
+            document.getElementById('campaign-complete').classList.remove('hidden');
+            document.getElementById('final-sent-count').textContent = sentCount;
+            document.getElementById('final-fail-count').textContent = failCount;
+        }
+
+        function resetApp() {
+            currentState = { currentStep: 1, sender: null, template: null, recipients: [] };
+            document.getElementById('recipient-input').value = '';
+            handleRecipientInput();
+            document.querySelectorAll('.preflight-check').forEach(c => c.checked = false);
+            goToStep(1);
+        }
+    </script>
+    <style>
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        .login-form {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .login-form.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+
+</html>
