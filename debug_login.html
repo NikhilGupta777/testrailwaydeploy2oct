@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        input, button { padding: 10px; margin: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Debug Login Test</h2>
+        <div>
+            <input type="text" id="username" placeholder="Username" value="admin">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            BACKEND_URL: 'http://localhost:8000',
+            TOKEN_KEY: 'auth_token'
+        };
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        // Simulate the Auth module
+        const Auth = {
+            getToken() { 
+                return localStorage.getItem(CONFIG.TOKEN_KEY); 
+            },
+            setToken(token) { 
+                localStorage.setItem(CONFIG.TOKEN_KEY, token);
+                log(`Token stored: ${token.substring(0, 20)}...`);
+            },
+            clearAuth() {
+                localStorage.removeItem(CONFIG.TOKEN_KEY);
+                log('Auth cleared');
+            }
+        };
+
+        // Simulate the API module
+        const API = {
+            async fetch(url, options = {}) {
+                const token = Auth.getToken();
+                const headers = { 'Content-Type': 'application/json', ...options.headers };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                
+                log(`API Request: ${options.method || 'GET'} ${CONFIG.BACKEND_URL}${url}`);
+                
+                try {
+                    const response = await fetch(`${CONFIG.BACKEND_URL}${url}`, { ...options, headers });
+                    log(`API Response: ${response.status} ${response.statusText}`);
+                    
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            log('Unauthorized - clearing auth');
+                            Auth.clearAuth();
+                            throw new Error('Session expired. Please log in again.');
+                        }
+                        let errorData;
+                        try {
+                            errorData = await response.json();
+                            log(`Error response data: ${JSON.stringify(errorData)}`);
+                        } catch (jsonError) {
+                            log('Could not parse error response as JSON');
+                            throw new Error(response.statusText || 'Request failed');
+                        }
+                        throw new Error(errorData.detail || 'Request failed');
+                    }
+                    
+                    if (response.status === 204) return null;
+                    const data = await response.json();
+                    log(`API Response data: ${JSON.stringify(data, null, 2)}`);
+                    return data;
+                } catch (error) {
+                    log(`API fetch error: ${error.message}`);
+                    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                        throw new Error('Network error: Please check your connection and try again.');
+                    }
+                    throw error;
+                }
+            }
+        };
+
+        async function testLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            log('=== Starting Login Test ===');
+            
+            if (!username || !password) {
+                log('ERROR: Please enter username and password.');
+                return;
+            }
+            
+            try {
+                log(`Attempting login for username: ${username}`);
+                
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const response = await fetch(`${CONFIG.BACKEND_URL}/token`, { 
+                    method: 'POST', 
+                    body: formData 
+                });
+                
+                log(`Login response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    let errorMessage = 'Login failed';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.detail || errorMessage;
+                        log(`Login error data: ${JSON.stringify(errorData)}`);
+                    } catch (parseError) {
+                        log(`Error parsing response: ${parseError.message}`);
+                        errorMessage = `Login failed (${response.status})`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                log('Login successful, received token');
+                
+                if (!data.access_token) {
+                    throw new Error('No access token received');
+                }
+                
+                Auth.setToken(data.access_token);
+                
+                // Test getting user data
+                log('Testing user data fetch...');
+                const userData = await API.fetch('/users/me');
+                log(`User data loaded: ${JSON.stringify(userData, null, 2)}`);
+                
+                log('=== Login Test Successful ===');
+                
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+                log('=== Login Test Failed ===');
+            }
+        }
+
+        // Test on page load
+        window.addEventListener('load', () => {
+            log('Page loaded, ready for testing');
+            const existingToken = Auth.getToken();
+            if (existingToken) {
+                log(`Existing token found: ${existingToken.substring(0, 20)}...`);
+            } else {
+                log('No existing token found');
+            }
+        });
+    </script>
+</body>
+</html>

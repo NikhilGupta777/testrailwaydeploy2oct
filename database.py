@@ -10,7 +10,7 @@ SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Check if the database URL is set
 if not SQLALCHEMY_DATABASE_URL:
-    raise ValueError("No DATABASE_URL found in environment variables")
+    raise ValueError("No DATABASE_URL found in environment variables. Please set DATABASE_URL in your environment variables.")
 
 # The connect_args are specific to SQLite and not needed for PostgreSQL
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

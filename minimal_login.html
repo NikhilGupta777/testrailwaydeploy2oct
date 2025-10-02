@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Minimal Login Test</h2>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username" value="admin" required>
+            <input type="password" id="password" placeholder="Password" value="admin123" required>
+            <button type="submit">Login</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8000';
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.innerHTML = '<div class="success">Attempting login...</div>';
+
+            try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+
+                const response = await fetch(`${BACKEND_URL}/token`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Login failed');
+                }
+
+                const data = await response.json();
+                console.log('Login successful:', data);
+
+                resultDiv.innerHTML = '<div class="success">Login successful! Token received.</div>';
+
+            } catch (error) {
+                console.error('Login error:', error);
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

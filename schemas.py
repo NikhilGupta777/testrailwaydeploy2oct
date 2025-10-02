@@ -53,13 +53,19 @@ class EmailRequest(BaseModel):
     from_email: Optional[EmailStr] = None
     to_email: EmailStr
     subject: str
-    body: str
+    body: Optional[str] = None
+    template_id: Optional[str] = None
+    sendgrid_template_id: Optional[str] = None
+    dynamic_template_data: Optional[dict] = None
 
 # Template schemas
 class TemplateBase(BaseModel):
     name: str
     subject: str
-    body: str
+    body: Optional[str] = None
+    sendgrid_template_id: Optional[str] = None
+    preview_html: Optional[str] = None
+    template_variables: Optional[List[str]] = None
     category: str
 
 class TemplateCreate(TemplateBase):
@@ -71,9 +77,19 @@ class TemplateUpdate(BaseModel):
     body: Optional[str] = None
     category: Optional[str] = None
 
+class AdminTemplateCreate(TemplateBase):
+    body: str  # Admin templates must have body content for campaigns
+
+class AdminTemplateUpdate(BaseModel):
+    name: Optional[str] = None
+    subject: Optional[str] = None
+    sendgrid_template_id: Optional[str] = None
+    preview_html: Optional[str] = None
+    template_variables: Optional[List[str]] = None
+    category: Optional[str] = None
+
 class Template(TemplateBase):
-    id: str  # Changed to str to match existing database
-    # user_id: Optional[int]  # Temporarily removed to match database
+    id: str
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
@@ -160,6 +176,7 @@ class EmailValidationRequest(BaseModel):
 class EmailValidationResult(BaseModel):
     email: str
     valid: bool
+    deliverable: bool
     reason: Optional[str] = None
 
 class EmailValidationResponse(BaseModel):
@@ -174,3 +191,30 @@ class EmailGenerationRequest(BaseModel):
 class EmailGenerationResponse(BaseModel):
     subject: str
     body: str
+
+# Chat schemas
+class ChatMessageBase(BaseModel):
+    message: str
+    message_type: str = "text"
+
+class ChatMessageCreate(ChatMessageBase):
+    recipient_id: Optional[int] = None  # null for global messages
+    room_id: Optional[str] = None
+
+class ChatMessage(ChatMessageBase):
+    id: int
+    sender_id: int
+    recipient_id: Optional[int]
+    room_id: Optional[str]
+    created_at: datetime
+    is_read: bool
+    sender_username: Optional[str] = None
+    recipient_username: Optional[str] = None
+    sender_role: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class ChatHistoryResponse(BaseModel):
+    messages: List[ChatMessage]
+    total_count: int

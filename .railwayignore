@@ -1,0 +1,33 @@
+# Test files
+test_*.py
+*_test.py
+debug_*.py
+verify_*.py
+create_test_*.py
+check_*.py
+migrate_*.py
+
+# Development files
+*.log
+*.sqlite
+*.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login Test</h2>
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Username" value="admin">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button type="submit">Login</button>
+        </form>
+        <div id="result"></div>
+        <div id="userInfo"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8000';
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            const userInfoDiv = document.getElementById('userInfo');
+            
+            resultDiv.innerHTML = '<div class="info">Attempting login...</div>';
+            
+            try {
+                // Step 1: Login
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const loginResponse = await fetch(`${BACKEND_URL}/token`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Login response:', loginResponse.status, loginResponse.statusText);
+                
+                if (!loginResponse.ok) {
+                    const errorData = await loginResponse.json();
+                    throw new Error(errorData.detail || 'Login failed');
+                }
+                
+                const loginData = await loginResponse.json();
+                console.log('Login data:', loginData);
+                
+                resultDiv.innerHTML = '<div class="success">Login successful! Token received.</div>';
+                
+                // Step 2: Get user info
+                const userResponse = await fetch(`${BACKEND_URL}/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${loginData.access_token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('User info response:', userResponse.status, userResponse.statusText);
+                
+                if (!userResponse.ok) {
+                    throw new Error('Failed to get user info');
+                }
+                
+                const userData = await userResponse.json();
+                console.log('User data:', userData);
+                
+                userInfoDiv.innerHTML = `
+                    <div class="success">
+                        <h3>User Information:</h3>
+                        <p><strong>Username:</strong> ${userData.username}</p>
+                        <p><strong>Email:</strong> ${userData.email}</p>
+                        <p><strong>Role:</strong> ${userData.role}</p>
+                        <p><strong>ID:</strong> ${userData.id}</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>
