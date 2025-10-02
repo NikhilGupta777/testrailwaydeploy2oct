@@ -3,7 +3,7 @@ uvicorn[standard]==0.24.0
 SQLAlchemy==2.0.23
 psycopg2-binary==2.9.9
 python-dotenv==1.0.0
-passlib[bcrypt]==1.7.4
+bcrypt==3.2.0
 python-jose[cryptography]==3.3.0
 sendgrid==6.10.0
 Authlib==1.2.1
