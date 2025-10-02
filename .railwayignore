@@ -1,33 +1,28 @@
-# Test files
-test_*.py
-*_test.py
-debug_*.py
-verify_*.py
-create_test_*.py
-check_*.py
-migrate_*.py
+# Git version control history
+.git
 
-# Development files
-*.log
-*.sqlite
-*.db
+# Local environment variables (use Railway's variable manager instead)
+.env
 
-# IDE files
+# IDE configuration folders
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Temporary files
+# Python caches and compiled files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-*.so
-.coverage
-.pytest_cache/
+
+# Test and utility scripts that are not needed in production
+test_*.py
+debug_*.py
+verify_*.py
+create_*.py
+check_*.py
+migrate_*.py
+
+# Other development files
+*.log
+*.sqlite
+*.db
