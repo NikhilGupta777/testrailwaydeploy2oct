@@ -8,7 +8,12 @@ const CONFIG = {
             return metaTag.content;
         }
         // Fallback to localhost for development
-        return window.location.protocol + '//' + window.location.hostname + ':8000';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            // Use port 8000 for local development
+            return window.location.protocol + '//' + window.location.hostname + ':8000';
+        }
+        // For deployed environments, use the same origin without a port
+        return window.location.origin;
     })(),
     TOKEN_KEY: 'auth_token',
     // Google client ID should be configured server-side
