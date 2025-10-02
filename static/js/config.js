@@ -1,28 +1,21 @@
 // Configuration and Constants
 const CONFIG = {
     // Make backend URL configurable via environment or meta tag
-    BACKEND_URL: (function() {
-        // Try to get from meta tag first (server-side rendered)
-        const metaTag = document.querySelector('meta[name="backend-url"]');
-        if (metaTag && metaTag.content) {
-            return metaTag.content;
-        }
-        // Fallback to localhost for development
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            // Use port 8000 for local development
-            return window.location.protocol + '//' + window.location.hostname + ':8000';
-        }
+    BACKEND_URL: (function () {
         // For deployed environments, use the same origin without a port
-        return window.location.origin;
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            return window.location.origin;
+        }
+        // Fallback to localhost with port 8000 for development
+        return window.location.protocol + '//' + window.location.hostname + ':8000';
     })(),
     TOKEN_KEY: 'auth_token',
     // Google client ID should be configured server-side
-    GOOGLE_CLIENT_ID: (function() {
+    GOOGLE_CLIENT_ID: (function () {
         const metaTag = document.querySelector('meta[name="google-client-id"]');
         return metaTag ? metaTag.content : '';
     })()
 };
-
 // Initialize Google Client ID when DOM is ready
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
